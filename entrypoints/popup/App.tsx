@@ -1,5 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import "./App.css";
+import { ModelSelect } from "./components/ModelSelect";
+
+interface Settings {
+  apiKey: string;
+  provider: "openrouter" | "openai";
+  model: string;
+  enableContext: boolean;
+}
 
 function App() {
   const [apiKey, setApiKey] = useState("");
@@ -11,6 +19,22 @@ function App() {
   const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">(
     "idle"
   );
+  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  // 使用 ref 存储初始设置
+  const initialSettings = useRef<Settings | null>(null);
+
+  // 检查设置是否发生变化
+  const hasSettingsChanged = useCallback(() => {
+    if (!initialSettings.current) return false;
+
+    return (
+      initialSettings.current.apiKey !== apiKey ||
+      initialSettings.current.provider !== provider ||
+      initialSettings.current.model !== model ||
+      initialSettings.current.enableContext !== enableContext
+    );
+  }, [apiKey, provider, model, enableContext]);
 
   // 加载保存的设置
   useEffect(() => {
@@ -24,11 +48,24 @@ function App() {
         setEnableContext(
           result.enableContext !== undefined ? result.enableContext : true
         );
+
+        // 保存初始设置
+        initialSettings.current = {
+          apiKey: result.apiKey || "",
+          provider: (result.provider as "openrouter" | "openai") || "openrouter",
+          model: result.model || "qwen/qwq-32b:free",
+          enableContext: result.enableContext !== undefined ? result.enableContext : true,
+        };
       });
   }, []);
 
-  // 保存设置
-  const saveSettings = async () => {
+  // 自动保存功能
+  const saveSettings = useCallback(async () => {
+    // 如果设置没有变化，不进行保存
+    if (!hasSettingsChanged()) {
+      return;
+    }
+
     setStatus("saving");
     try {
       await browser.storage.sync.set({
@@ -37,6 +74,14 @@ function App() {
         model,
         enableContext,
       });
+
+      // 更新初始设置
+      initialSettings.current = {
+        apiKey,
+        provider,
+        model,
+        enableContext,
+      };
 
       // 通知内容脚本设置已更新
       const tabs = await browser.tabs.query({});
@@ -63,13 +108,56 @@ function App() {
       setStatus("error");
       setTimeout(() => setStatus("idle"), 2000);
     }
-  };
+  }, [apiKey, provider, model, enableContext, hasSettingsChanged]);
+
+  // 监听设置变化并自动保存
+  useEffect(() => {
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout);
+    }
+
+    // 只有在初始设置加载完成后才开始监听变化
+    if (initialSettings.current) {
+      const timeout = setTimeout(() => {
+        saveSettings();
+      }, 1000);
+
+      setAutoSaveTimeout(timeout);
+    }
+
+    return () => {
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+      }
+    };
+  }, [apiKey, provider, model, enableContext, saveSettings]);
 
   return (
     <div className="settings-container">
       <div className="header">
         <h1>Lakphy Copilot</h1>
         <p className="subtitle">配置您的AI副驾驶</p>
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="provider">API 提供商</label>
+        <select
+          id="provider"
+          value={provider}
+          onChange={(e) => {
+            const newProvider = e.target.value as "openrouter" | "openai";
+            setProvider(newProvider);
+            // 切换提供商时设置默认模型
+            if (newProvider === "openai") {
+              setModel("gpt-3.5-turbo");
+            } else if (newProvider === "openrouter") {
+              setModel("qwen/qwq-32b:free");
+            }
+          }}
+        >
+          <option value="openrouter">OpenRouter</option>
+          <option value="openai">OpenAI</option>
+        </select>
       </div>
 
       <div className="form-group">
@@ -111,28 +199,24 @@ function App() {
       </div>
 
       <div className="form-group">
-        <label htmlFor="provider">API 提供商</label>
-        <select
-          id="provider"
-          value={provider}
-          onChange={(e) =>
-            setProvider(e.target.value as "openrouter" | "openai")
-          }
-        >
-          <option value="openrouter">OpenRouter</option>
-          <option value="openai">OpenAI</option>
-        </select>
-      </div>
-
-      <div className="form-group">
         <label htmlFor="model">模型</label>
-        <input
-          type="text"
-          id="model"
-          value={model}
-          onChange={(e) => setModel(e.target.value)}
-          placeholder="输入模型名称"
-        />
+        {provider === "openrouter" || provider === "openai" ? (
+          <ModelSelect
+            key={provider}
+            value={model}
+            onChange={setModel}
+            apiKey={apiKey}
+            provider={provider}
+          />
+        ) : (
+          <input
+            type="text"
+            id="model"
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            placeholder="输入模型名称"
+          />
+        )}
         <small>
           {provider === "openrouter" ? (
             <>推荐: qwen/qwq-32b:free (免费), anthropic/claude-3-opus:beta</>
@@ -160,17 +244,6 @@ function App() {
         </small>
       </div>
 
-      <button
-        className={`save-button ${status}`}
-        onClick={saveSettings}
-        disabled={status === "saving"}
-      >
-        {status === "idle" && "保存设置"}
-        {status === "saving" && "保存中..."}
-        {status === "success" && "保存成功!"}
-        {status === "error" && "保存失败!"}
-      </button>
-
       <div className="divider"></div>
 
       <div className="info">
@@ -182,6 +255,15 @@ function App() {
           </li>
         </ul>
       </div>
+      {status !== "idle" && (
+        <div className="toast-container">
+          <div className={`toast ${status}`}>
+            {status === "saving" && "保存中..."}
+            {status === "success" && "已保存"}
+            {status === "error" && "保存失败"}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,147 @@
+.model-select {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.selected-model {
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 1rem;
+}
+
+.selected-model .model-item {
+  margin-bottom: 0;
+  background-color: #f8f9fa;
+  border-color: #6c757d;
+}
+
+.loading-model {
+  opacity: 0.7;
+  background-color: #f8f9fa;
+}
+
+.search-box {
+  margin-bottom: 1rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.loading,
+.error {
+  text-align: center;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.error {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+}
+
+.models-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.model-item {
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.model-item:hover {
+  background-color: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.model-item.selected {
+  background-color: #e9ecef;
+  border-color: #6c757d;
+}
+
+.model-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.model-name {
+  font-weight: 600;
+  color: #212529;
+  font-size: 1rem;
+}
+
+.model-id {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.model-description {
+  color: #495057;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+  max-height: 3.6em; /* 1.2em * 3 lines */
+  position: relative;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.model-description::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: 1.4em;
+  background: linear-gradient(transparent, #fff);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.model-item:hover .model-description {
+  max-height: 200px; /* 足够大的高度以显示完整内容 */
+  overflow-y: auto;
+}
+
+.model-item:hover .model-description::before {
+  opacity: 0;
+}
+
+/* 自定义滚动条样式 */
+.model-description::-webkit-scrollbar {
+  width: 4px;
+}
+
+.model-description::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.model-description::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 2px;
+}
+
+.model-description::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.model-pricing {
+  color: #6c757d;
+  font-size: 0.75rem;
+}
