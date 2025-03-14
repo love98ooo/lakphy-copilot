@@ -18,9 +18,10 @@ interface ModelSelectProps {
   onChange: (value: string) => void;
   apiKey: string;
   provider: "openrouter" | "openai";
+  baseURL?: string;
 }
 
-export function ModelSelect({ value, onChange, apiKey, provider }: ModelSelectProps) {
+export function ModelSelect({ value, onChange, apiKey, provider, baseURL }: ModelSelectProps) {
   const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +53,7 @@ export function ModelSelect({ value, onChange, apiKey, provider }: ModelSelectPr
         setModels(data.data || []);
         setFilteredModels(data.data || []);
       } else {
-        response = await fetch("https://api.openai.com/v1/models", {
+        response = await fetch(`${baseURL || "https://api.openai.com/v1"}/models`, {
           headers: {
             Authorization: `Bearer ${apiKey}`,
           },
@@ -62,20 +63,16 @@ export function ModelSelect({ value, onChange, apiKey, provider }: ModelSelectPr
 
         // 转换 OpenAI 模型数据格式以匹配我们的接口
         const formattedModels = data.data
-          .filter((model: any) =>
-            // 只显示 GPT 相关模型
-            model.id.includes("gpt")
-          )
           .map((model: any) => ({
             id: model.id,
             name: model.id.split("-").map((word: string) =>
               word.charAt(0).toUpperCase() + word.slice(1)
             ).join(" "),
-            description: "OpenAI 提供的语言模型",
-            context_length: model.context_length || 4096,
+            description: model?.description || "",
+            context_length: model?.context_length || 4096,
             pricing: {
-              prompt: "参考 OpenAI 官方定价",
-              completion: "参考 OpenAI 官方定价"
+              prompt: model?.pricing?.prompt || "",
+              completion: model?.pricing?.completion || ""
             }
           }));
 
@@ -92,7 +89,7 @@ export function ModelSelect({ value, onChange, apiKey, provider }: ModelSelectPr
   // 初始加载
   useEffect(() => {
     fetchModels();
-  }, [apiKey, provider]);
+  }, [apiKey, provider, baseURL]);
 
   // 搜索过滤
   const filterModels = debounce((term: string) => {
@@ -128,6 +125,14 @@ export function ModelSelect({ value, onChange, apiKey, provider }: ModelSelectPr
     setFilteredModels(models);
   };
 
+  // 当提供商改变时，清空模型列表和错误状态
+  useEffect(() => {
+    setModels([]);
+    setFilteredModels([]);
+    setError(null);
+    setSearchTerm("");
+  }, [provider]);
+
   return (
     <div className="model-select">
       {value && (
@@ -144,9 +149,20 @@ export function ModelSelect({ value, onChange, apiKey, provider }: ModelSelectPr
                   <div className="model-description">{selectedModel.description}</div>
                   <div className="model-pricing">
                     <small>
-                      输入: {selectedModel.pricing.prompt} / 
+                      输入: {selectedModel.pricing.prompt} /
                       输出: {selectedModel.pricing.completion}
                     </small>
+                  </div>
+                </div>
+              );
+            } else if (loading) {
+              return (
+                <div className="model-item selected loading-model">
+                  <div className="model-header">
+                    <span className="model-id">{value}</span>
+                  </div>
+                  <div className="model-description">
+                    加载模型信息中...
                   </div>
                 </div>
               );
@@ -157,7 +173,7 @@ export function ModelSelect({ value, onChange, apiKey, provider }: ModelSelectPr
                     <span className="model-id">{value}</span>
                   </div>
                   <div className="model-description">
-                    加载模型信息中...
+                    无法加载模型信息
                   </div>
                 </div>
               );

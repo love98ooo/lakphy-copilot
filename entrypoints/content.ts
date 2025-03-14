@@ -11,14 +11,16 @@ export default defineContentScript({
     let provider: "openrouter" | "openai" = "openrouter";
     let model = "qwen/qwq-32b:free";
     let enableContext = true; // 默认启用上下文提取
+    let baseURL = ""; // 添加 baseURL 变量
 
     // 从存储中获取API密钥和设置
     browser.storage.sync
-      .get(["apiKey", "provider", "model", "enableContext"])
+      .get(["apiKey", "provider", "model", "enableContext", "baseURL"])  // 添加 baseURL
       .then((result) => {
         apiKey = result.apiKey || "";
         provider = (result.provider as "openrouter" | "openai") || "openrouter";
         model = result.model || "qwen/qwq-32b:free";
+        baseURL = result.baseURL || "";  // 设置 baseURL
         // 如果enableContext设置存在，使用它；否则默认为true
         enableContext =
           result.enableContext !== undefined ? result.enableContext : true;
@@ -197,6 +199,7 @@ export default defineContentScript({
             model,
             apiKey,
             pageContext, // 传递页面上下文
+            baseURL,    // 添加 baseURL
           });
 
           // 如果在等待响应期间用户又输入了新内容，则放弃这次结果
@@ -411,6 +414,7 @@ export default defineContentScript({
         apiKey = message.apiKey || "";
         provider = message.provider || "openrouter";
         model = message.model || "qwen/qwq-32b:free";
+        baseURL = message.baseURL || "";  // 更新 baseURL
         enableContext =
           message.enableContext !== undefined ? message.enableContext : true;
       }

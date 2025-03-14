@@ -7,6 +7,7 @@ interface Settings {
   provider: "openrouter" | "openai";
   model: string;
   enableContext: boolean;
+  baseURL: string;
 }
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
   );
   const [model, setModel] = useState("qwen/qwq-32b:free");
   const [enableContext, setEnableContext] = useState(true);
+  const [baseURL, setBaseURL] = useState("");
   const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">(
     "idle"
   );
@@ -32,19 +34,21 @@ function App() {
       initialSettings.current.apiKey !== apiKey ||
       initialSettings.current.provider !== provider ||
       initialSettings.current.model !== model ||
-      initialSettings.current.enableContext !== enableContext
+      initialSettings.current.enableContext !== enableContext ||
+      initialSettings.current.baseURL !== baseURL
     );
-  }, [apiKey, provider, model, enableContext]);
+  }, [apiKey, provider, model, enableContext, baseURL]);
 
   // 加载保存的设置
   useEffect(() => {
     browser.storage.sync
-      .get(["apiKey", "provider", "model", "enableContext"])
+      .get(["apiKey", "provider", "model", "enableContext", "baseURL"])
       .then((result) => {
         if (result.apiKey) setApiKey(result.apiKey);
         if (result.provider)
           setProvider(result.provider as "openrouter" | "openai");
         if (result.model) setModel(result.model);
+        if (result.baseURL) setBaseURL(result.baseURL);
         setEnableContext(
           result.enableContext !== undefined ? result.enableContext : true
         );
@@ -55,6 +59,7 @@ function App() {
           provider: (result.provider as "openrouter" | "openai") || "openrouter",
           model: result.model || "qwen/qwq-32b:free",
           enableContext: result.enableContext !== undefined ? result.enableContext : true,
+          baseURL: result.baseURL || "",
         };
       });
   }, []);
@@ -73,6 +78,7 @@ function App() {
         provider,
         model,
         enableContext,
+        baseURL,
       });
 
       // 更新初始设置
@@ -81,6 +87,7 @@ function App() {
         provider,
         model,
         enableContext,
+        baseURL,
       };
 
       // 通知内容脚本设置已更新
@@ -94,6 +101,7 @@ function App() {
               provider,
               model,
               enableContext,
+              baseURL,
             })
             .catch(() => {
               // 忽略无法发送消息的错误（例如，未加载内容脚本的标签页）
@@ -108,7 +116,7 @@ function App() {
       setStatus("error");
       setTimeout(() => setStatus("idle"), 2000);
     }
-  }, [apiKey, provider, model, enableContext, hasSettingsChanged]);
+  }, [apiKey, provider, model, enableContext, baseURL, hasSettingsChanged]);
 
   // 监听设置变化并自动保存
   useEffect(() => {
@@ -130,7 +138,7 @@ function App() {
         clearTimeout(autoSaveTimeout);
       }
     };
-  }, [apiKey, provider, model, enableContext, saveSettings]);
+  }, [apiKey, provider, model, enableContext, baseURL, saveSettings]);
 
   return (
     <div className="settings-container">
@@ -147,11 +155,13 @@ function App() {
           onChange={(e) => {
             const newProvider = e.target.value as "openrouter" | "openai";
             setProvider(newProvider);
-            // 切换提供商时设置默认模型
+            // 切换提供商时设置默认模型和清空 baseURL
             if (newProvider === "openai") {
               setModel("gpt-3.5-turbo");
+              setBaseURL("https://api.openai.com");  // 设置默认的 OpenAI baseURL
             } else if (newProvider === "openrouter") {
               setModel("qwen/qwq-32b:free");
+              setBaseURL("");  // OpenRouter 不需要 baseURL
             }
           }}
         >
@@ -198,6 +208,22 @@ function App() {
         </small>
       </div>
 
+      {provider === "openai" && (
+        <div className="form-group">
+          <label htmlFor="baseURL">API 基础 URL</label>
+          <input
+            type="text"
+            id="baseURL"
+            value={baseURL}
+            onChange={(e) => setBaseURL(e.target.value)}
+            placeholder="https://api.openai.com"
+          />
+          <small>
+            可选：如果您使用代理或自定义部署，请设置自定义的 API 基础 URL
+          </small>
+        </div>
+      )}
+
       <div className="form-group">
         <label htmlFor="model">模型</label>
         {provider === "openrouter" || provider === "openai" ? (
@@ -207,6 +233,7 @@ function App() {
             onChange={setModel}
             apiKey={apiKey}
             provider={provider}
+            baseURL={baseURL}
           />
         ) : (
           <input

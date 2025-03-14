@@ -17,6 +17,67 @@
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #222;
+    --foreground: #fff;
+    --accents-1: #111;
+    --accents-2: #333;
+    --accents-3: #444;
+    --accents-4: #666;
+    --accents-5: #888;
+    --accents-6: #999;
+    --accents-7: #eaeaea;
+    --accents-8: #fafafa;
+    --success: #0070f3;
+    --error: #ff4444;
+    --warning: #f5a623;
+  }
+
+  input, select {
+    color: var(--foreground);
+    background-color: var(--background);
+    border-color: var(--accents-4);
+  }
+
+  input:focus, select:focus {
+    border-color: var(--success);
+  }
+
+  .info {
+    background-color: var(--accents-1);
+    border-color: var(--accents-3);
+  }
+
+  .toast.saving {
+    color: #63a7ff;
+    background-color: rgba(13, 110, 253, 0.2);
+    border-color: rgba(182, 212, 254, 0.3);
+  }
+
+  .toast.success {
+    color: #2fb344;
+    background-color: rgba(25, 135, 84, 0.2);
+    border-color: rgba(186, 219, 204, 0.3);
+  }
+
+  .toast.error {
+    color: #ff4444;
+    background-color: rgba(220, 53, 69, 0.2);
+    border-color: rgba(245, 194, 199, 0.3);
+  }
+
+  .divider {
+    background-color: var(--accents-2);
+  }
+
+  kbd {
+    background-color: var(--accents-2);
+    border-color: var(--accents-3);
+    color: var(--foreground);
+  }
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

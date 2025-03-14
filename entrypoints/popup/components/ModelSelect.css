@@ -6,19 +6,19 @@
 
 .selected-model {
   margin-bottom: 1rem;
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 2px solid var(--accents-2);
   padding-bottom: 1rem;
 }
 
 .selected-model .model-item {
   margin-bottom: 0;
-  background-color: #f8f9fa;
-  border-color: #6c757d;
+  background-color: var(--accents-1);
+  border-color: var(--accents-3);
 }
 
 .loading-model {
   opacity: 0.7;
-  background-color: #f8f9fa;
+  background-color: var(--accents-1);
 }
 
 .search-box {
@@ -28,9 +28,11 @@
 .search-input {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--accents-2);
   border-radius: 4px;
   font-size: 14px;
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
 .loading,
@@ -41,9 +43,9 @@
 }
 
 .error {
-  color: #dc3545;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
+  color: var(--error);
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(245, 194, 199, 0.3);
   border-radius: 4px;
 }
 
@@ -54,21 +56,22 @@
 
 .model-item {
   padding: 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--accents-2);
   border-radius: 4px;
   margin-bottom: 0.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  background-color: var(--background);
 }
 
 .model-item:hover {
-  background-color: #f8f9fa;
-  border-color: #adb5bd;
+  background-color: var(--accents-1);
+  border-color: var(--accents-3);
 }
 
 .model-item.selected {
-  background-color: #e9ecef;
-  border-color: #6c757d;
+  background-color: var(--accents-1);
+  border-color: var(--accents-3);
 }
 
 .model-header {
@@ -80,21 +83,21 @@
 
 .model-name {
   font-weight: 600;
-  color: #212529;
+  color: var(--foreground);
   font-size: 1rem;
 }
 
 .model-id {
-  color: #6c757d;
+  color: var(--accents-5);
   font-size: 0.875rem;
 }
 
 .model-description {
-  color: #495057;
+  color: var(--accents-6);
   font-size: 0.875rem;
   margin-bottom: 0.5rem;
   line-height: 1.4;
-  max-height: 3.6em; /* 1.2em * 3 lines */
+  max-height: 3.6em;
   position: relative;
   overflow: hidden;
   transition: max-height 0.3s ease;
@@ -107,14 +110,14 @@
   right: 0;
   width: 100%;
   height: 1.4em;
-  background: linear-gradient(transparent, #fff);
+  background: linear-gradient(transparent, var(--background));
   pointer-events: none;
   opacity: 1;
   transition: opacity 0.3s ease;
 }
 
 .model-item:hover .model-description {
-  max-height: 200px; /* 足够大的高度以显示完整内容 */
+  max-height: 200px;
   overflow-y: auto;
 }
 
@@ -122,26 +125,55 @@
   opacity: 0;
 }
 
-/* 自定义滚动条样式 */
 .model-description::-webkit-scrollbar {
   width: 4px;
 }
 
 .model-description::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--accents-1);
   border-radius: 2px;
 }
 
 .model-description::-webkit-scrollbar-thumb {
-  background: #888;
+  background: var(--accents-4);
   border-radius: 2px;
 }
 
 .model-description::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--accents-5);
 }
 
 .model-pricing {
-  color: #6c757d;
+  color: var(--accents-5);
   font-size: 0.75rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .model-item {
+    border-color: var(--accents-3);
+  }
+
+  .model-item:hover {
+    background-color: var(--accents-2);
+    border-color: var(--accents-4);
+  }
+
+  .model-item.selected {
+    background-color: var(--accents-2);
+    border-color: var(--accents-4);
+  }
+
+  .model-description::before {
+    background: linear-gradient(transparent, var(--background));
+  }
+
+  .loading-model {
+    background-color: var(--accents-2);
+  }
+
+  .search-input:focus {
+    border-color: var(--success);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
+  }
 }

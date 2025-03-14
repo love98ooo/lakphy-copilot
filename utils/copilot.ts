@@ -16,6 +16,7 @@ export async function inputCopilot(props: {
   maxChars?: number;
   includeOriginal?: boolean;
   pageContext?: string;
+  baseURL?: string;
 }) {
   const {
     text,
@@ -26,13 +27,17 @@ export async function inputCopilot(props: {
     maxChars = 15,
     includeOriginal = true,
     pageContext,
+    baseURL,
   } = props;
   const providerInstance = (() => {
     switch (provider) {
       case "openrouter":
         return createOpenRouter({ apiKey });
       case "openai":
-        return createOpenAI({ apiKey });
+        return createOpenAI({
+          apiKey,
+          baseURL: baseURL || "https://api.openai.com/v1",
+        });
       default:
         throw new Error(`Unsupported provider: ${provider}`);
     }
@@ -40,70 +45,51 @@ export async function inputCopilot(props: {
   const { text: responseText } = await generateText({
     // @ts-ignore
     model: providerInstance(model),
-    prompt: `<role>You are a professional ${role} helping users with intelligent text completion for any input field.</role>
+    system: `You are a professional ${role} helping users with intelligent text completion for any input field.
 
-<task>
-Generate a natural and fluent completion suggestion based on the user's input: "${text}".
-</task>
+Generate natural and fluent text completions that continue the user's input while reflecting professional expertise
+- Extend the input text logically while maintaining coherence with preceding content
+- Align suggestions with the specified professional role context: ${role}
+- Strictly adhere to operational constraints and output requirements
 
-<input>
-${text}
-</input>
-${
-  pageContext
-    ? `
-<page_context>
-${pageContext}
-</page_context>`
-    : ""
-}
+**Steps**
+1. Analyze input text to identify linguistic patterns and semantic intent
+2. If page context exists (${pageContext}), incorporate relevant environmental factors
+3. Generate 3-5 candidate continuations matching the professional perspective
+4. Select optimal suggestion meeting ALL requirements:
+   - [${includeOriginal ? "Includes original text" : "Omits original text"}]
+   - Maintains natural linguistic flow
+   - Stays under ${maxChars} character limit
+5. Validate spacing/syntax for direct insertion after user input
 
-<requirements>
-1. ${
-      includeOriginal
-        ? `Your output MUST include the user's original input: "${text}"`
-        : "Your output should NOT include the user's original input"
-    }
-2. Naturally extend or complete what the user might be trying to express
-3. The suggestion should be concise, practical, and reflect the professional perspective of a ${role}
-4. Keep the additional content within ${maxChars} characters ${
-      includeOriginal ? "(excluding the original user input)" : ""
-    }
-5. Format as a single complete phrase without explanations, punctuation, or extra formatting
-6. Return ONLY the completion result with no prefixes or additional text
-7. Do not add quotation marks or other punctuation unless they are a natural part of the input
-8. If no meaningful suggestion can be provided, return an empty string
-9. Your output will be completed directly after the user inputs it without any modification, so please pay attention to the syntax of spaces in your output
-10. Do not output line breaks, tabs, etc. that affect typography
-${
-  pageContext
-    ? "11. Consider the page context provided when generating suggestions to make them more relevant to the user's current environment"
-    : ""
-}
-</requirements>
+**Output Format**
+Return ONLY the completion text as a continuous string with:
+- [${includeOriginal ? "Original input + continuation" : "Continuation only"}]
+- No quotation marks/punctuation unless grammatically required
+- No line breaks or special formatting
+- Exact length: ${maxChars} characters [${includeOriginal ? "(excluding original)" : ""}]
 
-<examples>
+**Examples**
 
-Input: "我想要"
-Output: ${
-      includeOriginal ? '"我想要一个简单易用的工具"' : '"一个简单易用的工具"'
-    }
+Input: "项目预算"
+Context: Financial planning role
+Output: [${includeOriginal ? "项目预算需要综合考虑资源分配" : "需要综合考虑资源分配"}]
 
-Input: "如何提高"
-Output: ${includeOriginal ? '"如何提高工作效率和生产力"' : '"工作效率和生产力"'}
+Input: "临床实验"
+Context: Medical researcher role
+Output: [${includeOriginal ? "临床实验必须遵循双盲原则" : "必须遵循双盲原则"}]
 
-Input: "今天天气"
-Output: ${includeOriginal ? '"今天天气怎么样？"' : '"怎么样？"'}
+Input: "用户留存"
+Context: SaaS product management
+Output: [${includeOriginal ? "用户留存的关键在于持续价值交付" : "关键在于持续价值交付"}]
 
-</examples>
-
-<output_format>
-Return ONLY the ${
-      includeOriginal
-        ? "complete text (with original input)"
-        : "completion result (without the original input)"
-    }, with no additional explanation.
-</output_format>`,
+**Notes**
+- Return empty string if no contextually appropriate completion exists
+- Preserve original capitalization/style from input
+- Mirror user's spacing conventions (e.g., extra spaces before punctuation)
+- Prioritize grammatical continuity over creative variations
+    `,
+    prompt: `Generate a natural and fluent completion suggestion based on the user's input: "${text}".`,
   });
   return responseText;
 }
